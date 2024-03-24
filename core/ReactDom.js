@@ -1,4 +1,5 @@
 let workgress = null
+let statusRefreshScheduled = false
 
 const render = (el, container) => {
   workgress = {
@@ -14,7 +15,12 @@ const render = (el, container) => {
 
     while (shouldYaild && workgress) {
       shouldYaild = deadline.timeRemaining() > 1
-      workgress = performanceUnit(workgress)
+      if (!statusRefreshScheduled) {
+        requestAnimationFrame(() => {
+          workgress = performanceUnit(workgress)
+        })
+        statusRefreshScheduled = true
+      }
     }
   }
 
