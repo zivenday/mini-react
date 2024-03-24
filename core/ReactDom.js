@@ -12,15 +12,9 @@ const render = (el, container) => {
 
   function workLoop(deadline) {
     let shouldYaild = true
-
     while (shouldYaild && workgress) {
       shouldYaild = deadline.timeRemaining() > 1
-      if (!statusRefreshScheduled) {
-        requestAnimationFrame(() => {
-          workgress = performanceUnit(workgress)
-        })
-        statusRefreshScheduled = true
-      }
+      workgress = performanceUnit(workgress)
     }
   }
 
@@ -44,7 +38,6 @@ const begainWork = (fiber) => {
     //   render(child, dom)
   })
 
-  fiber.parent.dom.append(fiber.dom)
   if (fiber.headChildFiber) return fiber.headChildFiber
   if (fiber.sbling) return fiber.sbling
   let parent = fiber.parent
@@ -58,10 +51,21 @@ const begainWork = (fiber) => {
 }
 
 const performanceUnit = (work) => {
+  let nextWork = null
   while (work) {
-    work = begainWork(work)
+    nextWork = begainWork(work)
+    if (work) updateDom(work)
+    work = nextWork
   }
   return work
+}
+
+const updateDom = function (fiber) {
+  ;(function (fiber) {
+    requestAnimationFrame(function () {
+      fiber.parent.dom.append(fiber.dom)
+    })
+  })(fiber)
 }
 
 const ReactDOM = {
