@@ -7,14 +7,16 @@ const createTextNode = (str) => {
   }
 }
 
-const createElementNode = (type, props, ...children) => {
+const createElement = (type, props, ...children) => {
   return {
     type,
     props: {
       ...props,
-      children,
     },
+    children: children.map((child) => {
+      return typeof child === 'string' ? createTextNode(child) : child
+    }),
   }
 }
 
-export { createTextNode, createElementNode }
+export default { createTextNode, createElement }
