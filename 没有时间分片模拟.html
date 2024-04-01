@@ -1,0 +1,29 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <script>
+    // 用于模拟代码执行耗费时间
+    const sleep = (delay) => {
+      for (let start = Date.now(); Date.now() - start <= delay; ) {}
+    }
+    const taskQueue = []
+    for (let index = 0; index < 100; index++) {
+      taskQueue.push({
+        expirationTime: 1000000,
+        callback: () => {
+          sleep(30)
+          console.log(index)
+        },
+      })
+    }
+    taskQueue.forEach((task) => {
+      task.callback()
+    })
+  </script>
+  <body>
+    我出现是loading完成
+  </body>
+</html>

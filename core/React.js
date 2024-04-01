@@ -68,7 +68,7 @@ const isSameType = (newFiber, oldFiber) => {
 const addDelets = (fiber, oldChildFiber) => {
   const parent = hasDomParent(fiber)
   parent.deletes = parent.deletes || []
-  parent.deletes.push(isFunc(oldChildFiber) ? oldChildFiber.dom : oldChildFiber.headChildFiber.dom)
+  parent.deletes.push(isFunc(oldChildFiber) ? oldChildFiber?.dom : oldChildFiber?.headChildFiber.dom)
 }
 
 const initChildren = (fiber) => {
@@ -80,7 +80,7 @@ const initChildren = (fiber) => {
     if (isSameType(child, oldChildFiber)) {
       childFiber = {
         ...child,
-        dom: oldChildFiber.dom,
+        dom: oldChildFiber?.dom,
         parent: fiber,
         headChildFiber: null,
         effectTags: 'update',
@@ -99,7 +99,7 @@ const initChildren = (fiber) => {
     oldChildFiber = oldChildFiber?.sbling
     //   render(child, dom)
   })
-  while (oldChildFiber?.sbling) {
+  while (oldChildFiber) {
     addDelets(fiber, oldChildFiber)
     oldChildFiber = oldChildFiber.sbling
   }
@@ -144,13 +144,15 @@ const performanceUnit = () => {
   return workgress
 }
 function hasDiffDep(deps, fiber, index) {
+  if (!fiber.alternate) return true
+  if (deps.length === 0) return false
   return deps.some((dep, idx) => dep !== fiber?.alternate?.effectsHooks[index]?.deps[idx])
 }
 function run(currentFiber) {
   if (!currentFiber) return
   currentFiber?.effectsHooks?.forEach((effect, index) => {
     let { callback, deps } = effect
-    const needCallback = Array.isArray(deps) && deps.length > 0 && hasDiffDep(deps, currentFiber, index)
+    const needCallback = Array.isArray(deps) && deps.length >= 0 && hasDiffDep(deps, currentFiber, index)
     needCallback && (effect.cleanUp = callback())
   })
 
@@ -160,7 +162,7 @@ function run(currentFiber) {
 function runCleanUp(currentFiber) {
   if (!currentFiber) return
   const oldFiber = currentFiber.alternate
-  oldFiber?.effectsHooks?.forEach(({ cleanUp }) => cleanUp())
+  oldFiber?.effectsHooks?.forEach(({ cleanUp }) => cleanUp && cleanUp())
   runCleanUp(currentFiber.headChildFiber)
   runCleanUp(currentFiber.sbling)
 }
@@ -204,6 +206,11 @@ const updateDomProps = (fiber, dom) => {
       const evenName = key.slice(2).toLowerCase()
       dom.removeEventListener(evenName, fiber.alternate?.props[key])
       dom.addEventListener(evenName, props[key])
+    } else if (key === 'style') {
+      const styles = props.style
+      Object.keys(props.style).forEach((styleKey) => {
+        dom.style[styleKey] = styles[styleKey]
+      })
     } else {
       dom[key] = props[key]
     }
@@ -303,7 +310,7 @@ const useEffect = (callback, deps) => {
   const effect = {
     deps,
     callback,
-    cleanUp: currentFiber?.alternate?.effectsHooks[effectsHooksIndex].cleanUp,
+    cleanUp: currentFiber?.alternate?.effectsHooks[effectsHooksIndex]?.cleanUp,
   }
 
   effectsHooks.push(effect)
